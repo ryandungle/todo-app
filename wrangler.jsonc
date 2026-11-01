@@ -1,0 +1,41 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "todo-app",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2025-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "ENVIRONMENT": "production",
+    "BETTER_AUTH_URL": "https://todo-app.ryandungl3.workers.dev",
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAFsIHF5Y-1hivyNj"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "todo-db",
+      "database_id": "125de780-2231-415b-9ff9-47260680c456",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "LIST_ROOM",
+        "class_name": "ListRoom"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["ListRoom"]
+    }
+  ]
+}
