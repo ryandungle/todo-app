@@ -96,11 +96,11 @@ export function AccountPanel({ user, onClose }: Props) {
       >
         <div className="border-b border-line px-6 py-4">
           <div className="eyebrow text-slate-500">Account</div>
-          <h2 id="account-title" className="mt-0.5 text-lg font-semibold">
+          <h2 id="account-title" className="mt-0.5 text-lg font-semibold break-words">
             {user.name}
           </h2>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
-            <span>{user.email}</span>
+            <span className="min-w-0 break-words">{user.email}</span>
             {user.emailVerified ? (
               <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
                 Verified

@@ -38,7 +38,7 @@ export function ConfirmDialog({ title, children, confirmLabel, onConfirm, onCanc
       aria-labelledby="confirm-title"
     >
       <div
-        className="w-full max-w-sm rounded-t-xl bg-white p-6 shadow-2xl sm:rounded-xl"
+        className="max-h-[92dvh] w-full max-w-sm overflow-y-auto rounded-t-xl bg-white p-6 shadow-2xl sm:rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex size-10 items-center justify-center rounded-full bg-red-50 text-red-600">
@@ -46,7 +46,7 @@ export function ConfirmDialog({ title, children, confirmLabel, onConfirm, onCanc
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
         </div>
-        <h2 id="confirm-title" className="text-lg font-semibold">
+        <h2 id="confirm-title" className="text-lg font-semibold break-words">
           {title}
         </h2>
         <div className="mt-1 text-sm text-slate-600">{children}</div>

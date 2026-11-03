@@ -93,7 +93,7 @@ export function SharePanel({ list, currentUserId, onClose, onRename, onDelete, o
               aria-label="List name"
             />
           ) : (
-            <h2 id="share-title" className="mt-0.5 text-lg font-semibold">
+            <h2 id="share-title" className="mt-0.5 text-lg font-semibold break-words">
               {list.name}
             </h2>
           )}
