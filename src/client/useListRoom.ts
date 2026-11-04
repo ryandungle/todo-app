@@ -47,6 +47,7 @@ export function useListRoom(listId: string): RoomStatus {
     let pingTimer: ReturnType<typeof setInterval> | undefined;
     let backoff = MIN_BACKOFF;
     let disposed = false;
+    let hasConnected = false;
 
     const cleanupSocket = () => {
       if (pingTimer) clearInterval(pingTimer);
@@ -64,9 +65,13 @@ export function useListRoom(listId: string): RoomStatus {
       ws.onopen = () => {
         backoff = MIN_BACKOFF;
         setStatus("live");
-        // We may have missed events while disconnected.
-        invalidateSoon(queryClient, keys.todos(listId));
-        invalidateSoon(queryClient, keys.overview);
+        // After a reconnect (or a first attempt that failed) we may have missed
+        // events. A clean first open needs no catch-up: the queries just fetched.
+        if (hasConnected) {
+          invalidateSoon(queryClient, keys.todos(listId));
+          invalidateSoon(queryClient, keys.overview);
+        }
+        hasConnected = true;
         pingTimer = setInterval(() => ws?.send("ping"), PING_INTERVAL);
       };
 
@@ -97,6 +102,7 @@ export function useListRoom(listId: string): RoomStatus {
       };
 
       ws.onclose = () => {
+        hasConnected = true;
         cleanupSocket();
         if (disposed) return;
         setStatus("offline");

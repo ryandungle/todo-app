@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 
 export type MenuItem = {
   label: string;
@@ -46,6 +46,17 @@ export function Menu({ items, align = "left", children }: Props) {
     const trigger = triggerRef.current.getBoundingClientRect();
     const needed = listRef.current.offsetHeight + 12;
     setFlipUp(window.innerHeight - trigger.bottom < needed && trigger.top > needed);
+  }, [open]);
+
+  // Keep the popover inside the viewport (8px margin) by nudging it sideways when it would overflow.
+  useLayoutEffect(() => {
+    const el = listRef.current;
+    if (!open || !el) return;
+    el.style.transform = "";
+    const { left, right } = el.getBoundingClientRect();
+    const margin = 8;
+    const dx = left < margin ? margin - left : right > window.innerWidth - margin ? window.innerWidth - margin - right : 0;
+    if (dx) el.style.transform = `translateX(${dx}px)`;
   }, [open]);
 
   useEffect(() => {
@@ -130,7 +141,7 @@ export function Menu({ items, align = "left", children }: Props) {
           id={id}
           role="menu"
           onKeyDown={onListKeyDown}
-          className={`absolute z-30 min-w-44 rounded-xl border border-line bg-white p-1.5 shadow-xl shadow-slate-900/10 ${
+          className={`absolute z-30 min-w-44 max-w-[calc(100vw-16px)] rounded-xl border border-line bg-white p-1.5 shadow-xl shadow-slate-900/10 ${
             flipUp ? "bottom-full mb-1.5" : "top-full mt-1.5"
           } ${align === "right" ? "right-0" : "left-0"}`}
         >

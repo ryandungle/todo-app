@@ -10,6 +10,7 @@ import { ListsView } from "./ListsView";
 import { MasterListView } from "./MasterListView";
 import { SharePanel } from "./SharePanel";
 import { Sidebar, type View } from "./Sidebar";
+import { saveFilter } from "./TaskTable";
 import { useAuth, type AuthUser } from "./useAuth";
 
 const SELECTED_KEY = "taskflow:selectedList";
@@ -64,6 +65,7 @@ function Shell({ user, onSignOut }: { user: AuthUser; onSignOut: () => void }) {
 
   const handleCreate = async (name: string) => {
     const created = await actions.create(name);
+    saveFilter(created.id, "active");
     openList(created.id);
   };
 

@@ -7,6 +7,12 @@ import type { RoomEvent } from "../shared/schemas";
  * D1 remains the source of truth and clients refetch when poked.
  */
 export class ListRoom extends DurableObject {
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env);
+    // Answer client pings at the runtime level so they don't wake a hibernated DO.
+    this.ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair("ping", "pong"));
+  }
+
   async fetch(request: Request): Promise<Response> {
     if (request.headers.get("Upgrade") !== "websocket") {
       return new Response("Expected WebSocket", { status: 426 });
@@ -27,8 +33,8 @@ export class ListRoom extends DurableObject {
     }
   }
 
-  webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): void {
-    if (message === "ping") ws.send("pong");
+  webSocketMessage(_ws: WebSocket, _message: string | ArrayBuffer): void {
+    // Pings are auto-responded to in the constructor; nothing else is expected.
   }
 
   webSocketClose(ws: WebSocket): void {

@@ -7,12 +7,30 @@ import { chevron, Menu } from "./Menu";
 import { DuplicateNote, matchTodos, SuggestionList } from "./Suggestions";
 import type { Filter } from "./types";
 
-const filterLabel: Record<Filter, string> = {
+export const filterLabel: Record<Filter, string> = {
   all: "All statuses",
   active: "Active",
   completed: "Completed",
 };
 import { useListRoom, type RoomStatus } from "./useListRoom";
+
+// The status filter is remembered per list. Storage may be blocked, so every access is guarded.
+const filterKey = (listId: string) => `taskflow:filter:${listId}`;
+
+export function saveFilter(listId: string, filter: Filter) {
+  try {
+    localStorage.setItem(filterKey(listId), filter);
+  } catch {}
+}
+
+function loadFilter(listId: string): Filter {
+  try {
+    const v = localStorage.getItem(filterKey(listId));
+    return v === "active" || v === "completed" || v === "all" ? v : "all";
+  } catch {
+    return "all";
+  }
+}
 
 const roomBadge: Record<RoomStatus, { label: string; cls: string }> = {
   live: { label: "Live", cls: "bg-emerald-50 text-emerald-700" },
@@ -35,7 +53,7 @@ export function TaskTable({ list, me, onShare, onRename, onDelete, onLeave }: Pr
   const [nameDraft, setNameDraft] = useState(list.name);
   const [confirm, setConfirm] = useState<"delete" | "leave" | null>(null);
   const [title, setTitle] = useState("");
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<Filter>(() => loadFilter(list.id));
   const [formError, setFormError] = useState<string | null>(null);
 
   const [inputFocused, setInputFocused] = useState(false);
@@ -85,6 +103,8 @@ export function TaskTable({ list, me, onShare, onRename, onDelete, onLeave }: Pr
     }
     setFormError(null);
     setTitle("");
+    // A new task is active, so the "completed" filter would hide it. Reveal it without persisting, like jumpTo.
+    if (filter === "completed") setFilter("all");
     actions.create(parsed.data);
   };
 
@@ -138,7 +158,10 @@ export function TaskTable({ list, me, onShare, onRename, onDelete, onLeave }: Pr
             items={(["all", "active", "completed"] as const).map((f) => ({
               label: `${filterLabel[f]} (${counts[f]})`,
               selected: filter === f,
-              onSelect: () => setFilter(f),
+              onSelect: () => {
+                setFilter(f);
+                saveFilter(list.id, f);
+              },
             }))}
           >
             {(props) => (
@@ -287,13 +310,13 @@ export function TaskTable({ list, me, onShare, onRename, onDelete, onLeave }: Pr
 
       <div>
         <table className="w-full text-sm">
-          <thead>
+          <thead className="hidden md:table-header-group">
             <tr className="bg-slate-50 text-left font-mono text-[10px] tracking-wider text-slate-500 uppercase">
               <th className="w-10 px-5 py-2.5 font-medium">#</th>
               <th className="w-10 px-2 py-2.5 font-medium" aria-label="Done" />
               <th className="px-3 py-2.5 font-medium">Task</th>
               <th className="w-32 px-3 py-2.5 font-medium">Status</th>
-              <th className="hidden w-28 px-3 py-2.5 font-medium sm:table-cell">Added</th>
+              <th className="hidden w-28 px-3 py-2.5 font-medium md:table-cell">Added</th>
               <th className="w-14 px-3 py-2.5 font-medium" aria-label="Actions" />
             </tr>
           </thead>
@@ -406,15 +429,15 @@ function TaskRow({
       className={`group transition-colors duration-700 ${pending ? "opacity-50" : ""} ${highlighted ? "bg-amber-50" : ""}`}
       aria-busy={pending || undefined}
     >
-      <td className="px-5 py-3 font-mono text-xs text-slate-400">{index}</td>
-      <td className="px-2 py-3">
+      <td className="hidden px-5 py-3 font-mono text-xs text-slate-400 md:table-cell">{index}</td>
+      <td className="w-px px-2 py-3 pl-4 align-top md:pl-2 md:align-middle">
         <input
           type="checkbox"
           checked={todo.completed}
           disabled={pending}
           onChange={onToggle}
           aria-label={`Mark "${todo.title}" as ${todo.completed ? "active" : "completed"}`}
-          className="size-4 cursor-pointer accent-brand-600"
+          className="mt-0.5 size-4 cursor-pointer accent-brand-600 md:mt-0"
         />
       </td>
       <td className="px-3 py-3">
@@ -438,15 +461,25 @@ function TaskRow({
               {todo.title}
             </span>
             {creator && (
-              <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
+              <div className="mt-0.5 hidden items-center gap-1.5 text-xs text-slate-400 md:flex">
                 <Avatar name={todo.createdBy!.name} />
                 added by {creator}
               </div>
             )}
+            <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-slate-400 md:hidden">
+              {creator && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Avatar name={todo.createdBy!.name} />
+                  {creator}
+                </span>
+              )}
+              <span>{creator && "· "}{added}</span>
+              {completer && <span>· done by {completer}</span>}
+            </div>
           </div>
         )}
       </td>
-      <td className="px-3 py-3">
+      <td className="hidden px-3 py-3 md:table-cell">
         <span
           className={`rounded-full px-2 py-0.5 font-mono text-[10px] tracking-wider uppercase ${
             pending
@@ -466,8 +499,8 @@ function TaskRow({
           </div>
         )}
       </td>
-      <td className="hidden px-3 py-3 font-mono text-xs text-slate-400 sm:table-cell">{added}</td>
-      <td className="px-3 py-3 text-right">
+      <td className="hidden px-3 py-3 font-mono text-xs text-slate-400 md:table-cell">{added}</td>
+      <td className="w-px px-3 py-3 text-right whitespace-nowrap">
         <Menu
           align="right"
           items={[
